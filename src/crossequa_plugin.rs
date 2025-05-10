@@ -1,24 +1,18 @@
 use bevy::{
-    DefaultPlugins,
-    app::{App, Plugin, Startup},
-    asset::{AssetServer, Assets},
-    color::Srgba,
-    core_pipeline::core_3d::Camera3d,
-    ecs::system::{Commands, Res, ResMut},
-    math::Vec3,
-    pbr::{
-        DirectionalLight, MeshMaterial3d, StandardMaterial, environment_map::EnvironmentMapLight,
-    },
-    render::{
+    app::{App, Plugin, Startup}, asset::{AssetServer, Assets}, color::Srgba, core_pipeline::core_3d::Camera3d, ecs::system::{Commands, Res, ResMut}, math::Vec3, pbr::{
+        environment_map::EnvironmentMapLight, DirectionalLight, MeshMaterial3d, StandardMaterial
+    }, render::{
         camera::{OrthographicProjection, Projection, ScalingMode},
         mesh::{Mesh, Mesh3d},
-    },
-    transform::components::Transform,
-    utils::default,
+    }, text, transform::components::Transform, utils::default, DefaultPlugins
 };
+
+
 
 pub struct CrossequaPlugin;
 use crate::grid;
+use crate::texture_manager;
+
 
 fn startup(
     mut commands: Commands,
@@ -28,6 +22,13 @@ fn startup(
 ) {
     let cube = bevy::math::primitives::Cuboid::new(1.0, 1.0, 1.0);
     let cube_mesh = meshes.add(cube);
+
+    let a = asset_server.as_ref();
+
+    let texture_manager = TextureManager::new(asset_server.as_ref());
+
+    texture_manager.get_tile_material();
+
     let base_color_texture = asset_server.load("textures/Scifi_Panels_01_basecolor.png");
     let metallic_roughtness_texture = asset_server.load("textures/Scifi_Panels_01_roughness.png");
     let emissive_texture = asset_server.load("textures/Scifi_Panels_01_emissive.png");
