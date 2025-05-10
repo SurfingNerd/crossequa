@@ -3,16 +3,26 @@ name = "crossequa"
 version = "0.1.0"
 edition = "2024"
 
+# [workspace]
+#resolver = "2"
+
+
 [dependencies]
-bevy = { version = "0.16.0", features = ["dynamic_linking"] }
-bevy-inspector-egui = "0.31.0"
-rand = "0.9.1"
-symbolica = "0.16.0"
+bevy = { version = "0.16.0", default-features = false, features = ["bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_pbr", "bevy_render", "bevy_sprite", "bevy_sprite_picking_backend", "bevy_state", "bevy_text", "bevy_ui", "bevy_ui_picking_backend"] }
+
+
+# bevy-inspector-egui = "0.31.0"
+# rand = "0.9.1"
+# symbolica = "0.16.0"
 
 # for Linux
-[target.x86_64-unknown-linux-gnu]
-linker = "clang"
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+# [target.x86_64-unknown-linux-gnu]
+# linker = "clang"
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
 
 # Optimizations
 [profile.dev]
