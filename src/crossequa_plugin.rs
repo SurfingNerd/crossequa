@@ -18,9 +18,9 @@ use bevy::{
     utils::default,
 };
 
+use crate::texture_manager::TextureManager;
+
 pub struct CrossequaPlugin;
-use crate::grid;
-use crate::texture_manager;
 
 fn startup(
     mut commands: Commands,
@@ -34,15 +34,9 @@ fn startup(
     // TODO: ...
     // let a = asset_server.as_ref();
 
-    // let texture_manager = TextureManager::new(asset_server.as_ref());
+    let texture_manager = TextureManager::new(asset_server.as_ref());
 
-    // texture_manager.get_tile_material();
-
-    let base_color_texture = asset_server.load("textures/Scifi_Panels_01_basecolor.png");
-    let metallic_roughtness_texture = asset_server.load("textures/Scifi_Panels_01_roughness.png");
-    let emissive_texture = asset_server.load("textures/Scifi_Panels_01_emissive.png");
-    let occlusion_texture = asset_server.load("textures/Scifi_Panels_01_ambientocclusion.png");
-    let normal_map_texture = asset_server.load("textures/Scifi_Panels_01_normal.png");
+    let material = texture_manager.get_tile_material();
 
     // add entities to the world
     for y in -2..=2 {
@@ -52,17 +46,7 @@ fn startup(
             // sphere
             commands.spawn((
                 Mesh3d(cube_mesh.clone()),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    // vary key PBR parameters on a grid of spheres to show the effect
-                    base_color_texture: Some(base_color_texture.clone()),
-                    metallic_roughness_texture: Some(metallic_roughtness_texture.clone()),
-                    emissive_texture: Some(emissive_texture.clone()),
-                    occlusion_texture: Some(occlusion_texture.clone()),
-                    normal_map_texture: Some(normal_map_texture.clone()),
-                    metallic: y01,
-                    perceptual_roughness: x01,
-                    ..default()
-                })),
+                MeshMaterial3d(materials.add(material.clone())),
                 Transform::from_xyz(x as f32, y as f32 + 0.5, 0.0),
             ));
         }
@@ -98,6 +82,6 @@ impl Plugin for CrossequaPlugin {
     fn build(&self, app: &mut App) {
         // add things to your app here
         app.add_plugins(DefaultPlugins)
-            .add_systems(Startup, (startup, grid::generate_grid));
+            .add_systems(Startup, (startup));
     }
 }
