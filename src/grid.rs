@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 use rand::Rng;
 use rand::prelude::IndexedRandom;
-use symbolica::*;
-use symbolica::{atom::AtomCore, parse};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
@@ -24,8 +22,15 @@ impl std::fmt::Display for Operator {
     }
 }
 
+pub struct BinaryOperation {
+    pub num1: i32,
+    pub operator: Operator,
+    pub num2: i32,
+    pub result: i32,
+}
+
 #[derive(Debug, Clone, PartialEq)]
-pub enum Cell {
+pub enum Symbol {
     Number(i32),
     Operator(Operator),
     Equals,
@@ -33,17 +38,17 @@ pub enum Cell {
     Empty,
 }
 
-impl std::fmt::Display for Cell {
+impl std::fmt::Display for Symbol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Cell::Number(n) => format!("{n}"),
-            Cell::Operator(Operator::Add) => "+".to_string(),
-            Cell::Operator(Operator::Subtract) => "-".to_string(),
-            Cell::Operator(Operator::Multiply) => "*".to_string(),
-            Cell::Operator(Operator::Divide) => "/".to_string(),
-            Cell::Equals => "=".to_string(),
-            Cell::Unknown => "x".to_string(),
-            Cell::Empty => " ".to_string(),
+            Symbol::Number(n) => format!("{n}"),
+            Symbol::Operator(Operator::Add) => "+".to_string(),
+            Symbol::Operator(Operator::Subtract) => "-".to_string(),
+            Symbol::Operator(Operator::Multiply) => "*".to_string(),
+            Symbol::Operator(Operator::Divide) => "/".to_string(),
+            Symbol::Equals => "=".to_string(),
+            Symbol::Unknown => "x".to_string(),
+            Symbol::Empty => " ".to_string(),
         };
         write!(f, "{s}")
     }
@@ -55,165 +60,236 @@ pub enum Direction {
     Vertical,
 }
 
-pub fn generate_grid() {
-    let rows = 10;
-    let cols = 10;
-    let num_equations = 6;
-
-    let grid = generate_crossword_grid(rows, cols, num_equations);
-    print_grid(&grid);
+pub struct Equation {
+    lhs: Vec<Symbol>,
+    rhs: Vec<Symbol>,
 }
 
-pub fn print_grid(grid: &[Vec<Cell>]) {
-    for row in grid {
-        for cell in row {
-            print!("{:>2} ", cell); // Adjust spacing for alignment
-        }
-        println!();
+impl Equation {
+    pub fn new(lhs: Vec<Symbol>, rhs: Vec<Symbol>) -> Self {
+        Self { lhs, rhs }
     }
-}
 
-fn generate_crossword_grid(rows: usize, cols: usize, num_equations: usize) -> Vec<Vec<Cell>> {
-    let mut grid = vec![vec![Cell::Empty; cols]; rows];
-    let mut rng = rand::rng();
-
-    let directions = [Direction::Horizontal, Direction::Vertical];
-
-    let mut attempts = 0;
-    let mut placed = 0;
-
-    while placed < num_equations && attempts < num_equations * 100 {
-        let dir = directions.choose(&mut rng).unwrap().clone();
-        let row = rng.random_range(0..rows);
-        let col = rng.random_range(0..cols);
-
-        if !can_place_equation(&grid, row, col, &dir) {
-            attempts += 1;
-            continue;
-        }
-
-        let equation = generate_equation_with_unknown();
-
-        if place_equation(&mut grid, row, col, &dir, &equation) {
-            placed += 1;
+    pub fn nth(&self, n: usize) -> Option<&Symbol> {
+        if n < self.lhs.len() {
+            self.lhs.get(n)
         } else {
-            attempts += 1;
+            self.rhs.get(n - self.lhs.len())
         }
     }
 
-    grid
+    pub fn len(&self) -> usize {
+        self.lhs.len() + self.rhs.len() + 1 // +1 for the equals sign
+    }
+
+    pub fn symbols(&self) -> Vec<Symbol> {
+        let mut full_equation = self.lhs.clone();
+        full_equation.push(Symbol::Equals);
+        full_equation.extend(self.rhs.clone());
+        full_equation
+    }
 }
 
-pub fn generate_equation_with_unknown() -> Vec<Cell> {
-    let mut rng = rand::rng();
-    let operators = [
-        Operator::Add,
-        Operator::Subtract,
-        Operator::Multiply,
-        Operator::Divide,
-    ];
-    let op = operators.choose(&mut rng).unwrap().clone();
+pub struct EquationGenerator {}
 
-    let (a, b, c) = match op {
-        Operator::Add => {
-            let a = rng.random_range(1..10);
-            let b = rng.random_range(1..10);
-            (a, b, a + b)
-        }
-        Operator::Subtract => {
-            let a = rng.random_range(1..10);
-            let b = rng.random_range(1..10);
-            (a, b, a - b)
-        }
-        Operator::Multiply => {
-            let a = rng.random_range(1..10);
-            let b = rng.random_range(1..10);
-            (a, b, a * b)
-        }
-        Operator::Divide => {
-            let b = rng.random_range(1..10);
-            let c = rng.random_range(1..10);
-            let a = b * c;
-            (a, b, c)
-        }
-    };
+impl EquationGenerator {
+    pub fn generate_equation(running_result: Option<i32>, num_operations: u32) -> Equation {
+        let mut curr_equation: Vec<Symbol> = Vec::new();
+        let mut running_result = running_result;
 
-    let mut cells = vec![
-        Cell::Number(a),
-        Cell::Operator(op),
-        Cell::Number(b),
-        Cell::Equals,
-        Cell::Number(c),
-    ];
+        for i in 0..num_operations {
+            let op = Self::generate_operation(running_result);
+            if i == 0 || running_result.is_none() {
+                curr_equation.push(Symbol::Number(op.num1));
+            }
+            curr_equation.push(Symbol::Operator(op.operator));
+            curr_equation.push(Symbol::Number(op.num2));
 
-    // Replace one random non-operator, non-equals Cell with Unknown
-    let possible_indices = [0, 2, 4];
-    let &replace_idx = possible_indices.choose(&mut rng).unwrap();
-    cells[replace_idx] = Cell::Unknown;
+            running_result = Some(op.result);
+        }
 
-    cells
+        Equation::new(curr_equation, vec![Symbol::Number(running_result.unwrap())])
+    }
+
+    fn generate_operation(prev_a: Option<i32>) -> BinaryOperation {
+        let mut rng = rand::rng();
+
+        let a = prev_a.unwrap_or_else(|| rng.random_range(1..10));
+        let b = rng.random_range(1..10);
+        let mut operators = vec![Operator::Add, Operator::Subtract, Operator::Multiply];
+        if b != 0 {
+            operators.push(Operator::Divide);
+        }
+
+        let op = operators.choose(&mut rng).unwrap();
+
+        let (num1, num2, result) = match op {
+            Operator::Add => (a, b, a + b),
+            Operator::Subtract => (a, b, a - b),
+            Operator::Multiply => (a, b, a * b),
+            Operator::Divide => (a, b, a / b),
+        };
+
+        return BinaryOperation {
+            num1,
+            operator: op.clone(),
+            num2,
+            result,
+        };
+    }
 }
 
-fn can_place_equation(
-    grid: &Vec<Vec<Cell>>,
-    row: usize,
-    col: usize,
-    direction: &Direction,
-) -> bool {
-    let (dr, dc) = match direction {
-        Direction::Horizontal => (0, 1),
-        Direction::Vertical => (1, 0),
-    };
+pub struct GridEquation {
+    eq: Equation,
+    start_pos: (usize, usize),
+    direction: Direction,
+}
 
-    // Ensure 5 cells fit in the grid
-    for i in 0..5 {
-        let r = row + i * dr;
-        let c = col + i * dc;
-        if r >= grid.len() || c >= grid[0].len() {
-            return false;
-        }
-        if grid[r][c] != Cell::Empty {
-            return false; // Or relax this check to allow matching overlapping content
+impl GridEquation {
+    pub fn new(eq: Equation, start_pos: (usize, usize), direction: Direction) -> Self {
+        Self {
+            eq,
+            start_pos,
+            direction,
         }
     }
-    true
-}
 
-fn place_equation(
-    grid: &mut Vec<Vec<Cell>>,
-    row: usize,
-    col: usize,
-    direction: &Direction,
-    equation: &[Cell],
-) -> bool {
-    let (dr, dc) = match direction {
-        Direction::Horizontal => (0, 1),
-        Direction::Vertical => (1, 0),
-    };
+    pub fn end_pos(&self) -> (usize, usize) {
+        let (start_row, start_col) = self.start_pos;
+        let len = self.len();
+        match self.direction {
+            Direction::Horizontal => (start_row, start_col + len - 1),
+            Direction::Vertical => (start_row + len - 1, start_col),
+        }
+    }
 
-    for i in 0..5 {
-        let r = row + i * dr;
-        let c = col + i * dc;
-        match grid[r][c] {
-            Cell::Empty => grid[r][c] = equation[i].clone(),
-            ref existing => {
-                if *existing != equation[i] {
-                    return false;
+    pub fn symbols(&self) -> Vec<Symbol> {
+        self.eq.symbols()
+    }
+
+    pub fn len(&self) -> usize {
+        self.eq.len()
+    }
+
+    pub fn get_symbol(&self, position: (usize, usize)) -> Option<&Symbol> {
+        let (row, col) = position;
+        let (start_row, start_col) = self.start_pos;
+
+        if row < start_row || col < start_col {
+            return None;
+        }
+
+        let offset_row = row - start_row;
+        let offset_col = col - start_col;
+
+        let offset = match self.direction {
+            Direction::Horizontal => {
+                if offset_row == 0 && offset_col < self.len() {
+                    Some(offset_col)
+                } else {
+                    None
+                }
+            }
+            Direction::Vertical => {
+                if offset_col == 0 && offset_row < self.len() {
+                    Some(offset_row)
+                } else {
+                    None
+                }
+            }
+        };
+
+        if let Some(offset) = offset {
+            return self.eq.nth(offset);
+        }
+
+        None
+    }
+
+    pub fn pos_of_rand_number(&self) -> (usize, usize) {
+        let max_n = (self.eq.lhs.len() / 2 + 1) as u32;
+        let n = (rand::random::<u32>() % max_n) + 1;
+
+        self.pos_of_nth_number(n as usize).unwrap()
+    }
+
+    pub fn pos_of_nth_number(&self, n: usize) -> Option<(usize, usize)> {
+        let (start_row, start_col) = self.start_pos;
+
+        let x = self.eq.lhs.clone();
+        let mut counter_n = 0;
+        let mut counter = 0;
+        for e in x {
+            counter_n += 1;
+            if let Symbol::Number(_) = e {
+                counter += 1;
+                if counter == n {
+                    break;
                 }
             }
         }
+
+        if counter_n > self.eq.lhs.len() {
+            return None; // Out of bounds
+        }
+
+        let (row, col) = match self.direction {
+            Direction::Horizontal => (start_row, start_col + counter_n - 1),
+            Direction::Vertical => (start_row + counter_n - 1, start_col),
+        };
+
+        Some((row, col))
     }
 
-    true
+    pub fn contains_point(&self, point: (usize, usize)) -> bool {
+        let (start_row, start_col) = self.start_pos;
+        let (row, col) = point;
+
+        match self.direction {
+            Direction::Horizontal => {
+                row == start_row && col >= start_col && col <= start_col + self.len()
+            }
+            Direction::Vertical => {
+                col == start_col && row >= start_row && row <= start_row + self.len()
+            }
+        }
+    }
 }
 
-fn equation_solver(lhs: &str, rhs: &str) {
-    let expr = parse!(lhs).unwrap() - parse!(rhs).unwrap();
-    let system = &[expr];
-    let vars = &[parse!("x").unwrap()];
-    let solutions = atom::Atom::solve_linear_system::<u8, _, _>(system, vars).unwrap();
+impl std::fmt::Display for GridEquation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let symbols = self.symbols();
+        let s = symbols
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<_>>()
+            .join(" ");
+        write!(f, "({:?}) - ({:?}): {}", self.start_pos, self.end_pos(), s)
+    }
+}
 
-    solutions.iter().for_each(|atom| {
-        println!("{}", atom.as_view().to_string());
-    });
+pub fn generate_grid() {
+    let mut position = (0, 0);
+    let mut dir = Direction::Horizontal;
+    let mut running_result = None;
+    for _ in 0..10 {
+        let g = EquationGenerator::generate_equation(running_result, 1);
+        let grid_equation = GridEquation::new(g, position, dir.clone());
+
+        position = grid_equation.pos_of_rand_number();
+        dir = match &dir {
+            Direction::Horizontal => Direction::Vertical,
+            Direction::Vertical => Direction::Horizontal,
+        };
+
+        let next_symbol = grid_equation.get_symbol(position).unwrap();
+        match next_symbol {
+            &Symbol::Number(n) => {
+                running_result = Some(n);
+            }
+            _ => {}
+        }
+
+        println!("equation: {}", grid_equation);
+    }
 }
