@@ -12,8 +12,16 @@ fn startup(mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,) {
 
+        
+
         let cube = bevy::math::primitives::Cuboid::new(1.0, 1.0, 1.0);
         let cube_mesh = meshes.add(cube);
+        let base_color_texture = asset_server.load("textures/Scifi_Panels_01_basecolor.png");
+        let metallic_roughtness_texture = asset_server.load("textures/Scifi_Panels_01_roughness.png");
+        let emissive_texture = asset_server.load("textures/Scifi_Panels_01_emissive.png");
+        let occlusion_texture = asset_server.load("textures/Scifi_Panels_01_ambientocclusion.png");
+        let normal_map_texture = asset_server.load("textures/Scifi_Panels_01_normal.png");
+        
         // add entities to the world
         for y in -2..=2 {
             for x in -5..=5 {
@@ -23,8 +31,12 @@ fn startup(mut commands: Commands,
                 commands.spawn((
                     Mesh3d(cube_mesh.clone()),
                     MeshMaterial3d(materials.add(StandardMaterial {
-                        base_color: Srgba::hex("#ffd891").unwrap().into(),
                         // vary key PBR parameters on a grid of spheres to show the effect
+                        base_color_texture: Some(base_color_texture.clone()),
+                        metallic_roughness_texture: Some(metallic_roughtness_texture.clone()),
+                        emissive_texture: Some(emissive_texture.clone()),
+                        occlusion_texture: Some(occlusion_texture.clone()),
+                        normal_map_texture: Some(normal_map_texture.clone()),
                         metallic: y01,
                         perceptual_roughness: x01,
                         ..default()
