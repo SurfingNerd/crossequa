@@ -29,21 +29,24 @@ fn setup(
 
     let texture_handle = asset_server.load("textures/Scifi_Panels_03_basecolor.png");
 
-
     //let texture_atlas = TextureAtlasLayout::from_grid(UVec2::splat(128), 32, 32, None, None);
-    
-    let texture_atlas = TextureAtlasLayout::from_grid(UVec2::new( 1024, 820), 4, 4, None,Some(UVec2 { x: 0, y: 410 }));
-    
+
+    let texture_atlas = TextureAtlasLayout::from_grid(
+        UVec2::new(1024, 820),
+        4,
+        4,
+        None,
+        Some(UVec2 { x: 0, y: 410 }),
+    );
 
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    
 
     // offset left: 1024
     // offsset top: 412
 
     // height 820
 
-    // width: 1024 
+    // width: 1024
 
     // root node
     commands
@@ -85,25 +88,21 @@ fn increment_atlas_index(
     mut image_nodes: Query<&mut ImageNode>,
     keyboard: Res<ButtonInput<KeyCode>>,
 ) {
-
-
     let mut inc: i64 = 0;
 
-    if keyboard.just_pressed(KeyCode::ArrowDown) { 
+    if keyboard.just_pressed(KeyCode::ArrowDown) {
         inc = 32;
-    } 
+    }
 
-    if keyboard.just_pressed(KeyCode::ArrowUp) { 
+    if keyboard.just_pressed(KeyCode::ArrowUp) {
         inc = -32;
     }
 
-
-    if keyboard.just_pressed(KeyCode::ArrowLeft) { 
+    if keyboard.just_pressed(KeyCode::ArrowLeft) {
         inc = -1;
     }
 
-
-    if keyboard.just_pressed(KeyCode::ArrowRight) { 
+    if keyboard.just_pressed(KeyCode::ArrowRight) {
         inc = 1;
     }
 
@@ -111,16 +110,13 @@ fn increment_atlas_index(
         if let Some(atlas) = &mut image_node.texture_atlas {
             let mut new_index = atlas.index as i64 + inc;
 
-
             if new_index < 0 {
-                atlas.index = 0; 
-                }
-            else {
+                atlas.index = 0;
+            } else {
                 atlas.index = (new_index % (32 * 32)) as usize;
-            } 
-             
-            bevy::log::debug!("atlas index: {:?}", atlas.index );
+            }
+
+            bevy::log::debug!("atlas index: {:?}", atlas.index);
         }
     }
-
 }
