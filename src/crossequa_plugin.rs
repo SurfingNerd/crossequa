@@ -1,21 +1,10 @@
 use bevy::{
-    DefaultPlugins,
-    app::{App, Plugin, Startup},
-    asset::{AssetServer, Assets},
-    color::Srgba,
-    core_pipeline::core_3d::Camera3d,
-    ecs::system::{Commands, Res, ResMut},
-    math::Vec3,
-    pbr::{
-        DirectionalLight, MeshMaterial3d, StandardMaterial, environment_map::EnvironmentMapLight,
-    },
-    render::{
-        camera::{OrthographicProjection, Projection, ScalingMode},
+    app::{App, Plugin, Startup}, asset::{AssetServer, Assets}, color::Srgba, core_pipeline::core_3d::Camera3d, ecs::{children, system::{Commands, Res, ResMut}}, math::{primitives::Cuboid, Quat, Vec3}, pbr::{
+        environment_map::EnvironmentMapLight, CascadeShadowConfigBuilder, DirectionalLight, MeshMaterial3d, StandardMaterial
+    }, render::{
+        camera::{Exposure, OrthographicProjection, Projection, ScalingMode},
         mesh::{Mesh, Mesh3d},
-    },
-    text,
-    transform::components::Transform,
-    utils::default,
+    }, text::{self, TextSpan}, transform::components::Transform, ui::{widget::Text, PositionType, Val}, utils::default, DefaultPlugins
 };
 
 use crate::texture_manager::TextureManager;
@@ -78,10 +67,13 @@ fn startup(
     ));
 }
 
+
+
+
 impl Plugin for CrossequaPlugin {
     fn build(&self, app: &mut App) {
         // add things to your app here
         app.add_plugins(DefaultPlugins)
-            .add_systems(Startup, (startup));
+        .add_systems(Startup, startup);
     }
 }
