@@ -9,7 +9,9 @@ use bevy::{
 };
 
 pub struct CrossequaPlugin;
-use crate::grid;
+use crate::board;
+use crate::equation;
+use crate::player_input;
 
 fn startup(mut commands: Commands) {
     commands.spawn((
@@ -30,15 +32,16 @@ fn startup(mut commands: Commands) {
 
 impl Plugin for CrossequaPlugin {
     fn build(&self, app: &mut App) {
-        // add things to your app here
-        app.add_plugins(DefaultPlugins).add_systems(
-            Startup,
-            (startup, grid::generate_grid, print_equations).chain(),
-        );
+        app.add_plugins(DefaultPlugins)
+            .add_systems(
+                Startup,
+                (startup, equation::generate_equations, board::setup_board).chain(),
+            )
+            .add_systems(Update, player_input::handle_mouse_click);
     }
 }
 
-fn print_equations(mut commands: Commands, equations: Res<grid::GridEquations>) {
+fn draw_equations(mut commands: Commands, equations: Res<equation::GridEquations>) {
     // TODO: Make an actual grid of symbols
     for eq in equations.iter() {
         let symbols = eq.symbols();
@@ -51,8 +54,8 @@ fn print_equations(mut commands: Commands, equations: Res<grid::GridEquations>) 
 
         for (i, symbol) in symbols.iter().enumerate() {
             let (x, y) = match dir {
-                grid::Direction::Horizontal => (pos.0 + i * grid_padding, pos.1),
-                grid::Direction::Vertical => (pos.0, pos.1 + i * grid_padding),
+                equation::Direction::Horizontal => (pos.0 + i * grid_padding, pos.1),
+                equation::Direction::Vertical => (pos.0, pos.1 + i * grid_padding),
             };
             commands.spawn((
                 Text2d::new(symbol.to_string()),

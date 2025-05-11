@@ -268,7 +268,7 @@ impl std::fmt::Display for GridEquation {
     }
 }
 
-pub fn generate_grid(mut commands: Commands) {
+pub fn generate_equations(mut commands: Commands) {
     let mut position = (0, 0);
     let mut dir = Direction::Horizontal;
     let mut running_result = None;
