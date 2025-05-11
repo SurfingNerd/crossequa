@@ -8,12 +8,11 @@ use bevy::{
     utils::default,
 };
 
-use crate::{grid, texture_manager::TextureManager};
+use crate::texture_manager::TextureManager;
 
 use crate::board;
 use crate::equation;
 use crate::player_input;
-
 
 pub struct CrossequaPlugin;
 
@@ -33,7 +32,6 @@ pub struct CrossequaPlugin;
 //         Transform::from_xyz(0.0, 0.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
 //     ));
 // }
-
 
 fn startup(
     mut commands: Commands,
@@ -65,7 +63,6 @@ fn startup(
         }
     }
 
-
     commands.spawn((
         DirectionalLight {
             illuminance: 1_500.,
@@ -80,7 +77,7 @@ fn startup(
         Transform::from_xyz(0.0, 0.0, 8.0).looking_at(Vec3::default(), Vec3::Y),
         Projection::from(OrthographicProjection {
             scale: 0.01,
-            
+
             ..OrthographicProjection::default_3d()
         }),
         EnvironmentMapLight {
@@ -91,9 +88,6 @@ fn startup(
         },
     ));
 }
-
-
-
 
 impl Plugin for CrossequaPlugin {
     fn build(&self, app: &mut App) {
