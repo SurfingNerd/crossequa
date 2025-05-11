@@ -1,6 +1,6 @@
 //! This example illustrates how to use `TextureAtlases` within ui
 
-use bevy::{color::palettes::css::*, prelude::*, /* winit::WinitSettings */};
+use bevy::{color::palettes::css::*, prelude::* /* winit::WinitSettings */};
 
 pub fn run_atlas_test() {
     App::new()
@@ -115,7 +115,7 @@ fn increment_atlas_index(
             } else {
                 atlas.index = (new_index % (32 * 32)) as usize;
             }
-             
+
             // bevy::log::debug!("atlas index: {:?}", atlas.index );
         }
     }

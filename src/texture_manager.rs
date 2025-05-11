@@ -1,24 +1,22 @@
 use bevy::{
     asset::{AssetServer, Handle},
-    image::Image, pbr::StandardMaterial, utils::default,
+    image::Image,
+    pbr::StandardMaterial,
+    utils::default,
 };
 
 pub struct TextureManager {
     tile_material: StandardMaterial,
 }
 
-
 impl TextureManager {
-
-    pub fn new(asset_server: &AssetServer ) -> Self {
-
-
+    pub fn new(asset_server: &AssetServer) -> Self {
         let base_color_texture = asset_server.load("textures/Scifi_Panels_01_basecolor.png");
-        let metallic_roughtness_texture = asset_server.load("textures/Scifi_Panels_01_roughness.png");
+        let metallic_roughtness_texture =
+            asset_server.load("textures/Scifi_Panels_01_roughness.png");
         let emissive_texture = asset_server.load("textures/Scifi_Panels_01_emissive.png");
         let occlusion_texture = asset_server.load("textures/Scifi_Panels_01_ambientocclusion.png");
         let normal_map_texture = asset_server.load("textures/Scifi_Panels_01_normal.png");
-
 
         let tile_material = StandardMaterial {
             // vary key PBR parameters on a grid of spheres to show the effect

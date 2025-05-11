@@ -29,9 +29,6 @@ fn startup(mut commands: Commands) {
     ));
 }
 
-
-
-
 impl Plugin for CrossequaPlugin {
     fn build(&self, app: &mut App) {
         // add things to your app here

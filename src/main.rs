@@ -8,8 +8,8 @@ use lighting::main_lighting;
 mod atlas_test;
 mod crossequa_plugin;
 mod grid;
-mod texture_manager;
 mod lighting;
+mod texture_manager;
 
 fn main() {
     //run_atlas_test();
