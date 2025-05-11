@@ -32,6 +32,11 @@ pub struct Board {
 #[derive(Component)]
 pub struct Cover;
 
+#[derive(Component, Debug)]
+pub struct Unknown {
+    pub number: i32,
+}
+
 pub fn setup_board(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -64,25 +69,30 @@ pub fn setup_board(
             let x_pos = (cell_size.size + cell_size.padding) as f32 * x as f32;
             let y_pos = (cell_size.size + cell_size.padding) as f32 * y as f32;
 
-            commands
-                .spawn((
-                    Name::new(format!("({}, {}) symbol '{}'", x, y, symbol.to_string())),
-                    Coordinates::new(x as i32, y as i32),
-                    Text2d::new(symbol.to_string()),
-                    TextShadow::default(),
-                    Transform::from_xyz(x_pos, y_pos, 0.0),
-                ))
-                .with_children(|child_builder| {
-                    child_builder.spawn((
-                        Name::new(format!("Cell ({}, {})", x, y)),
-                        Mesh2d(meshes.add(Rectangle {
-                            half_size: Vec2::new(30.0, 30.0),
-                        })),
-                        MeshMaterial2d(materials.add(Color::srgb(0.9, 0.8, 0.6))),
-                        Transform::from_xyz(0.0, 0.0, 1.0),
-                        Cover,
-                    ));
-                });
+            let mut curr_entity_comm = commands.spawn((
+                Name::new(format!("({}, {}) symbol '{}'", x, y, symbol.to_string())),
+                Coordinates::new(x as i32, y as i32),
+                Text2d::new(symbol.to_string()),
+                TextShadow::default(),
+                Transform::from_xyz(x_pos, y_pos, 0.0),
+            ));
+
+            curr_entity_comm.with_children(|child_builder| {
+                child_builder.spawn((
+                    Name::new(format!("Cell ({}, {})", x, y)),
+                    Mesh2d(meshes.add(Rectangle {
+                        half_size: Vec2::new(30.0, 30.0),
+                    })),
+                    MeshMaterial2d(materials.add(Color::srgb(0.9, 0.8, 0.6))),
+                    Transform::from_xyz(0.0, 0.0, 1.0),
+                    Cover,
+                ));
+            });
+
+            if let Symbol::Unknown(x) = symbol {
+                curr_entity_comm
+                    .insert((Name::new(format!("Unknown {}", x)), Unknown { number: *x }));
+            }
         }
     }
 

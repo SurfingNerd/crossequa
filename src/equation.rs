@@ -118,12 +118,12 @@ impl EquationGenerator {
         let a = prev_a.unwrap_or_else(|| rng.random_range(1..10));
         let b = rng.random_range(1..10);
         let mut operators = vec![Operator::Add, Operator::Subtract];
-        if i == 0 {
-            operators.push(Operator::Multiply);
-            if b != 0 {
-                operators.push(Operator::Divide);
-            }
-        }
+        // if i == 0 {
+        //     operators.push(Operator::Multiply);
+        //     if b != 0 {
+        //         operators.push(Operator::Divide);
+        //     }
+        // }
         let op = operators.choose(&mut rng).unwrap();
 
         let (num1, num2, result) = match op {
@@ -376,13 +376,45 @@ pub fn generate_equations(mut commands: Commands) {
             running_result = None;
         }
 
-        println!("equation: {}", grid_equation);
         grid_equations.push(grid_equation);
     }
 
     set_unknowns_in_equations(&mut grid_equations);
 
+    for eq in grid_equations.iter() {
+        println!("Grid equation: {}", eq);
+    }
+
     commands.insert_resource(GridEquations(grid_equations));
+}
+
+pub fn set_unknowns_in_equations(grid_equations: &mut Vec<GridEquation>) {
+    let mut updated_positions = Vec::new();
+
+    for grid_eq in grid_equations.iter_mut() {
+        // Find a position of a number to convert to `Unknown`
+        let (x, y, idx) = grid_eq.pos_of_rand_number_with_n();
+        // Check if this position is already updated in another equation
+        if updated_positions.contains(&(x, y)) {
+            continue;
+        }
+
+        let curr_symbol = grid_eq.get_symbol_idx(idx as usize);
+        if let Symbol::Number(n) = curr_symbol {
+            grid_eq.set_symbol_idx(idx as usize, Symbol::Unknown(*n));
+            println!(
+                "Set unknown to: ({}, {}), {}, symbol is {} - {}",
+                x,
+                y,
+                grid_eq,
+                grid_eq.get_symbol_idx(idx as usize),
+                grid_eq.get_symbol((x, y)).unwrap()
+            );
+            updated_positions.push((x, y));
+        } else {
+            println!("Did not find number: {}", curr_symbol);
+        }
+    }
 }
 
 // // Returns true if the new equation overlaps with 2 or more tiles with one of the existing equations
@@ -422,25 +454,3 @@ pub fn generate_equations(mut commands: Commands) {
 
 //     return overlap_count >= 2;
 // }
-
-pub fn set_unknowns_in_equations(grid_equations: &mut Vec<GridEquation>) {
-    let mut updated_positions = Vec::new();
-
-    for grid_eq in grid_equations.iter_mut() {
-        // Find a position of a number to convert to `Unknown`
-        let (x, y, idx) = grid_eq.pos_of_rand_number_with_n();
-        // Check if this position is already updated in another equation
-        if updated_positions.contains(&(x, y)) {
-            continue;
-        }
-
-        let curr_symbol = grid_eq.get_symbol_idx(idx as usize);
-        if let Symbol::Number(n) = curr_symbol {
-            grid_eq.set_symbol_idx(idx as usize, Symbol::Unknown(*n));
-            println!("Set unknown to: ({}, {}), {}", x, y, grid_eq);
-            updated_positions.push((x, y));
-        } else {
-            println!("Did not find number: {}", curr_symbol);
-        }
-    }
-}
