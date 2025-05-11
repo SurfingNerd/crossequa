@@ -1,0 +1,35 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        background: linear-gradient(
+          135deg,
+          white 0%,
+          white 49%,
+          black 49%,
+          black 51%,
+          white 51%,
+          white 100%
+        ) repeat;
+        background-size: 20px 20px;
+      }
+      canvas {
+        background-color: white;
+      }
+    </style>
+    <title>Cross Equations</title>
+  </head>
+  <script type="module">
+    console.log("starting loading JS");
+    import __wbg_init from './target/wasm/crossequa.js'
+    console.log("JS loaded, doing INIT");
+    __wbg_init();
+    console.log("INIT Done");
+  </script>
+  <body>
+    Loading game....
+  </body>
+  
+</html>
+ 
