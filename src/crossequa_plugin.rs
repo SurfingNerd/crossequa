@@ -94,7 +94,7 @@ impl Plugin for CrossequaPlugin {
         app.add_plugins(DefaultPlugins)
             .add_systems(
                 Startup,
-                (equation::generate_equations, startup, board::setup_board).chain(),
+                (equation::generate_equations, board::setup_board).chain(),
             )
             .add_systems(Update, player_input::handle_mouse_click);
     }
