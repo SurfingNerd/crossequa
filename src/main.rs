@@ -8,7 +8,6 @@ use crossequa_plugin::CrossequaPlugin;
 mod atlas_test;
 mod board;
 mod crossequa_plugin;
-mod grid;
 // mod lighting;
 mod equation;
 mod player_input;
