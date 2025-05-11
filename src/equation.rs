@@ -139,10 +139,15 @@ impl EquationGenerator {
     }
 }
 
+// #[derive(Reflect, Resource, Default, InspectorOptions, Deref)]
+// #[reflect(Resource, InspectorOptions)]
+#[derive(Resource, Deref)]
+pub struct GridEquations(pub Vec<GridEquation>);
+
 pub struct GridEquation {
-    eq: Equation,
-    start_pos: (usize, usize),
-    direction: Direction,
+    pub eq: Equation,
+    pub start_pos: (usize, usize),
+    pub direction: Direction,
 }
 
 impl GridEquation {
@@ -155,11 +160,11 @@ impl GridEquation {
     }
 
     pub fn end_pos(&self) -> (usize, usize) {
-        let (start_row, start_col) = self.start_pos;
+        let (start_x, start_y) = self.start_pos;
         let len = self.len();
         match self.direction {
-            Direction::Horizontal => (start_row, start_col + len - 1),
-            Direction::Vertical => (start_row + len - 1, start_col),
+            Direction::Horizontal => (start_x + len - 1, start_y),
+            Direction::Vertical => (start_x, start_y + len - 1),
         }
     }
 
@@ -172,27 +177,27 @@ impl GridEquation {
     }
 
     pub fn get_symbol(&self, position: (usize, usize)) -> Option<&Symbol> {
-        let (row, col) = position;
-        let (start_row, start_col) = self.start_pos;
+        let (x, y) = position;
+        let (start_x, start_y) = self.start_pos;
 
-        if row < start_row || col < start_col {
+        if x < start_x || y < start_y {
             return None;
         }
 
-        let offset_row = row - start_row;
-        let offset_col = col - start_col;
+        let offset_x = x - start_x;
+        let offset_y = y - start_y;
 
         let offset = match self.direction {
             Direction::Horizontal => {
-                if offset_row == 0 && offset_col < self.len() {
-                    Some(offset_col)
+                if offset_y == 0 && offset_x < self.len() {
+                    Some(offset_x)
                 } else {
                     None
                 }
             }
             Direction::Vertical => {
-                if offset_col == 0 && offset_row < self.len() {
-                    Some(offset_row)
+                if offset_x == 0 && offset_y < self.len() {
+                    Some(offset_y)
                 } else {
                     None
                 }
@@ -214,14 +219,13 @@ impl GridEquation {
     }
 
     pub fn pos_of_nth_number(&self, n: usize) -> Option<(usize, usize)> {
-        let (start_row, start_col) = self.start_pos;
+        let (start_x, start_y) = self.start_pos;
 
-        let x = self.eq.lhs.clone();
         let mut counter_n = 0;
         let mut counter = 0;
-        for e in x {
+        for sym in self.eq.lhs.clone() {
             counter_n += 1;
-            if let Symbol::Number(_) = e {
+            if let Symbol::Number(_) = sym {
                 counter += 1;
                 if counter == n {
                     break;
@@ -233,25 +237,21 @@ impl GridEquation {
             return None; // Out of bounds
         }
 
-        let (row, col) = match self.direction {
-            Direction::Horizontal => (start_row, start_col + counter_n - 1),
-            Direction::Vertical => (start_row + counter_n - 1, start_col),
+        let (x, y) = match self.direction {
+            Direction::Horizontal => (start_x + counter_n - 1, start_y),
+            Direction::Vertical => (start_x, start_y + counter_n - 1),
         };
 
-        Some((row, col))
+        Some((x, y))
     }
 
     pub fn contains_point(&self, point: (usize, usize)) -> bool {
-        let (start_row, start_col) = self.start_pos;
-        let (row, col) = point;
+        let (start_x, start_y) = self.start_pos;
+        let (x, y) = point;
 
         match self.direction {
-            Direction::Horizontal => {
-                row == start_row && col >= start_col && col <= start_col + self.len()
-            }
-            Direction::Vertical => {
-                col == start_col && row >= start_row && row <= start_row + self.len()
-            }
+            Direction::Horizontal => y == start_y && x >= start_x && x <= start_x + self.len(),
+            Direction::Vertical => x == start_x && y >= start_y && y <= start_y + self.len(),
         }
     }
 }
@@ -268,13 +268,15 @@ impl std::fmt::Display for GridEquation {
     }
 }
 
-pub fn generate_grid() {
+pub fn generate_equations(mut commands: Commands) {
     let mut position = (0, 0);
     let mut dir = Direction::Horizontal;
     let mut running_result = None;
-    for _ in 0..10 {
-        let g = EquationGenerator::generate_equation(running_result, 1);
-        let grid_equation = GridEquation::new(g, position, dir.clone());
+    let mut grid_equations = Vec::new();
+
+    for _ in 0..8 {
+        let equation = EquationGenerator::generate_equation(running_result, 1);
+        let grid_equation = GridEquation::new(equation, position, dir.clone());
 
         position = grid_equation.pos_of_rand_number();
         dir = match &dir {
@@ -291,5 +293,8 @@ pub fn generate_grid() {
         }
 
         println!("equation: {}", grid_equation);
+        grid_equations.push(grid_equation);
     }
+
+    commands.insert_resource(GridEquations(grid_equations));
 }
