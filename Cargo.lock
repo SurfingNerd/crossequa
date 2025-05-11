@@ -2011,6 +2011,7 @@ dependencies = [
  "bevy",
  "bevy-inspector-egui",
  "bevy_egui",
+ "image",
  "rand 0.9.1",
 ]
 

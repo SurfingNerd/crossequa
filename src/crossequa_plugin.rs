@@ -57,6 +57,7 @@ fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+     images: Res<Assets<Image>>,
     asset_server: Res<AssetServer>,
 ) {
     let cube = bevy::math::primitives::Cuboid::new(0.5, 0.5, 0.5);
@@ -65,7 +66,7 @@ fn startup(
     // TODO: ...
     // let a = asset_server.as_ref();
 
-    let texture_manager = TextureManager::new(asset_server.as_ref());
+    let texture_manager = TextureManager::new(asset_server.as_ref(), &images);
 
     let material = texture_manager.get_tile_material();
 
