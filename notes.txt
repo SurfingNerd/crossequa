@@ -1,0 +1,30 @@
+- backend equations
+- frontend tiling & rendering
+
+
+===================
+OPERATIONS
+- Start with addition, subtraction
+- Add multiplication, division
+- Add floats
+- Add exponential function, log, ...
+- Vectors, (matrices)
+
+
+===================
+TODO
+- Fix: overlapping equations!
+- generate divisors by generating multiplicators
+- generate equations such that both lhs and rhs are generated, instead of just generating lhs and computing rhs as its evaluation
+
+
+
+
+====================
+IDEAS
+- Make it infinite with increasing difficulity
+
+
+
+===================
+LIMITATIONS
