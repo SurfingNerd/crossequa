@@ -34,6 +34,7 @@ impl Plugin for CrossequaPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPlugins)
             .init_resource::<player_input::PlayerKeyboardInput>()
+            .init_resource::<player_input::CameraState>()
             .add_event::<player_input::UpdateSymbolEvent>()
             .add_systems(
                 Startup,
@@ -51,6 +52,7 @@ impl Plugin for CrossequaPlugin {
                     player_input::handle_mouse_click,
                     player_input::update_symbol_system,
                     player_input::update_player_text,
+                    player_input::camera_panning_system,
                 ),
             )
             .add_systems(

@@ -15,6 +15,7 @@ OPERATIONS
 TODO
 - Fix: overlapping equations!
 - generate divisors by generating multiplicators
+- uncovering empty tiles automatically
 - generate equations such that both lhs and rhs are generated, instead of just generating lhs and computing rhs as its evaluation
 
 

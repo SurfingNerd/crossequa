@@ -18,12 +18,16 @@ pub fn handle_mouse_click(
     coordinates: Query<&board::Coordinates>,
     unknowns: Query<(Entity, &board::Unknown), Without<Cover>>,
     mut taking_keyboard_input: ResMut<PlayerKeyboardInput>,
+    camera_state: Res<CameraState>,
 ) {
     let half_win_size = window.size() / 2.0;
 
     if mouse_button_input.just_pressed(MouseButton::Left) {
         let mut cursor_position_centered = window.cursor_position().unwrap();
         cursor_position_centered.y -= half_win_size.y * 2.0;
+        cursor_position_centered.x -= camera_state.total_delta.x;
+        cursor_position_centered.y -= camera_state.total_delta.y;
+
         cursor_position_centered.y *= -1.0; // Invert y-axis for the Bevy coordinate system
 
         // TODO: Put this in a a constant/resource
@@ -165,5 +169,30 @@ pub fn update_player_text(
 ) {
     for mut span in &mut query {
         **span = format!("Input: {}", taking_keyboard_input.curr_input);
+    }
+}
+
+#[derive(Resource, Default)]
+pub struct CameraState {
+    pub total_delta: Vec2,
+}
+
+pub fn camera_panning_system(
+    mut camera_state: ResMut<CameraState>,
+    mut mouse_motion_events: EventReader<bevy::input::mouse::MouseMotion>,
+    mouse_button_input: Res<ButtonInput<MouseButton>>,
+    mut query: Query<&mut Transform, With<Camera>>,
+) {
+    if mouse_button_input.pressed(MouseButton::Right) {
+        for motion_event in mouse_motion_events.read() {
+            let delta = motion_event.delta;
+
+            for mut transform in query.iter_mut() {
+                transform.translation.x -= delta.x * 0.5;
+                transform.translation.y += delta.y * 0.5;
+            }
+
+            camera_state.total_delta += delta * 0.5;
+        }
     }
 }
