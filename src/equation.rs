@@ -34,7 +34,7 @@ pub enum Symbol {
     Number(i32),
     Operator(Operator),
     Equals,
-    Unknown, // TODO: Store the solution here
+    Unknown(i32),
     Empty,
 }
 
@@ -47,10 +47,21 @@ impl std::fmt::Display for Symbol {
             Symbol::Operator(Operator::Multiply) => "*".to_string(),
             Symbol::Operator(Operator::Divide) => "/".to_string(),
             Symbol::Equals => "=".to_string(),
-            Symbol::Unknown => "x".to_string(),
             Symbol::Empty => " ".to_string(),
+            _ => "x".to_string(),
         };
         write!(f, "{s}")
+    }
+}
+
+impl Symbol {
+    pub fn string(&self, x: usize, y: usize) -> String {
+        if let Symbol::Unknown(n) = self {
+            println!("matched unknown at ({}, {}) {}", x, y, n);
+            return String::from("x");
+        }
+        let out = format!("{}", self);
+        out
     }
 }
 
@@ -60,6 +71,7 @@ pub enum Direction {
     Vertical,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Equation {
     lhs: Vec<Symbol>,
     rhs: Vec<Symbol>,
@@ -144,6 +156,7 @@ impl EquationGenerator {
 #[derive(Resource, Deref)]
 pub struct GridEquations(pub Vec<GridEquation>);
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct GridEquation {
     pub eq: Equation,
     pub start_pos: (usize, usize),
@@ -211,6 +224,39 @@ impl GridEquation {
         None
     }
 
+    pub fn set_symbol(&mut self, position: (usize, usize), symbol: Symbol) {
+        let (x, y) = position;
+        let (start_x, start_y) = self.start_pos;
+
+        if x < start_x || y < start_y {
+            return;
+        }
+
+        let offset_x = x - start_x;
+        let offset_y = y - start_y;
+
+        let offset = match self.direction {
+            Direction::Horizontal => {
+                if offset_y == 0 && offset_x < self.len() {
+                    Some(offset_x)
+                } else {
+                    None
+                }
+            }
+            Direction::Vertical => {
+                if offset_x == 0 && offset_y < self.len() {
+                    Some(offset_y)
+                } else {
+                    None
+                }
+            }
+        };
+
+        if let Some(offset) = offset {
+            self.eq.lhs[offset] = symbol;
+        }
+    }
+
     pub fn pos_of_rand_number(&self) -> (usize, usize) {
         let max_n = (self.eq.lhs.len() / 2 + 1) as u32;
         let n = (rand::random::<u32>() % max_n) + 1;
@@ -269,32 +315,94 @@ impl std::fmt::Display for GridEquation {
 }
 
 pub fn generate_equations(mut commands: Commands) {
+    let mut rng = rand::rng();
     let mut position = (0, 0);
     let mut dir = Direction::Horizontal;
     let mut running_result = None;
     let mut grid_equations = Vec::new();
 
-    for _ in 0..8 {
-        let equation = EquationGenerator::generate_equation(running_result, 1);
-        let grid_equation = GridEquation::new(equation, position, dir.clone());
+    for _ in 0..20 {
+        let equation = EquationGenerator::generate_equation(running_result, 2);
+        let grid_equation = GridEquation::new(equation.clone(), position, dir.clone());
 
-        position = grid_equation.pos_of_rand_number();
+        let nth_num = rng.random_range(2..=3);
+        position = grid_equation.pos_of_nth_number(nth_num).unwrap();
         dir = match &dir {
             Direction::Horizontal => Direction::Vertical,
             Direction::Vertical => Direction::Horizontal,
         };
 
         let next_symbol = grid_equation.get_symbol(position).unwrap();
-        match next_symbol {
-            &Symbol::Number(n) => {
-                running_result = Some(n);
-            }
-            _ => {}
+        if let Symbol::Number(n) = next_symbol {
+            running_result = Some(*n);
+        } else {
+            running_result = None;
         }
 
         println!("equation: {}", grid_equation);
         grid_equations.push(grid_equation);
     }
 
+    set_unknowns_in_equations(&mut grid_equations);
+
     commands.insert_resource(GridEquations(grid_equations));
+}
+
+// // Returns true if the new equation overlaps with 2 or more tiles with one of the existing equations
+// pub fn is_grid_equation_valid(grid_equations: &Vec<GridEquation>, new_eq: &GridEquation) -> bool {
+//     let mut overlap_count = 0;
+
+//     for eq in grid_equations.iter() {
+//         let curr_dir = match eq.direction {
+//             Direction::Horizontal => (1, 0),
+//             Direction::Vertical => (0, 1),
+//         };
+//         let mut curr_pos = eq.start_pos;
+
+//         for _ in 0..eq.len() {
+//             overlap_count += new_eq.contains_point(curr_pos) as usize;
+//             curr_pos.0 += curr_dir.0;
+//             curr_pos.1 += curr_dir.1;
+//         }
+//     }
+
+//     overlap_count <= 1
+// }
+
+// fn are_two_equations_non_valid_overlapping(eq1: &GridEquation, eq2: &GridEquation) -> bool {
+//     let mut overlap_count = 0;
+//     let curr_dir = match eq1.direction {
+//         Direction::Horizontal => (1, 0),
+//         Direction::Vertical => (0, 1),
+//     };
+//     let mut curr_pos = eq1.start_pos;
+
+//     for _ in 0..eq1.len() {
+//         overlap_count += eq2.contains_point(curr_pos) as usize;
+//         curr_pos.0 += curr_dir.0;
+//         curr_pos.1 += curr_dir.1;
+//     }
+
+//     return overlap_count >= 2;
+// }
+
+pub fn set_unknowns_in_equations(grid_equations: &mut Vec<GridEquation>) {
+    let mut updated_positions = Vec::new();
+
+    for grid_eq in grid_equations.iter_mut() {
+        // Find a position of a number to convert to `Unknown`
+        let (x, y) = grid_eq.pos_of_rand_number();
+        // Check if this position is already updated in another equation
+        if updated_positions.contains(&(x, y)) {
+            continue;
+        }
+
+        let n = match grid_eq.get_symbol((x, y)) {
+            Some(Symbol::Number(n)) => n,
+            _ => continue,
+        };
+        grid_eq.set_symbol((x, y), Symbol::Unknown(*n));
+        println!("Set unknown to: ({}, {}), {}", x, y, grid_eq);
+        updated_positions.push((x, y));
+    }
 }
