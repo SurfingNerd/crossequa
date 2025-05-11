@@ -8,7 +8,10 @@ edition = "2024"
 
 
 [dependencies]
+
 bevy = { version = "0.16.0", default-features = false, features = ["bevy_asset", "bevy_color", "bevy_core_pipeline", "bevy_pbr", "bevy_render", "bevy_state", "bevy_text", "bevy_ui", "bevy_ui_picking_backend"] }
+bevy-inspector-egui = "0.31.0"
+bevy_egui = "0.34.1"
 rand = "0.9.1"
 
 # bevy-inspector-egui = "0.31.0"
