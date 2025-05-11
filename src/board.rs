@@ -38,6 +38,7 @@ pub fn setup_board(
     mut meshes: ResMut<Assets<Mesh>>,
     equations: Res<equation::GridEquations>,
 ) {
+    info!("setup board called!");
     let grid_size = 20;
     let cell_size = CellSize {
         size: 60,

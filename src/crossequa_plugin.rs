@@ -16,6 +16,15 @@ use crate::player_input;
 
 pub struct CrossequaPlugin;
 
+
+use std::f32::consts::TAU;
+
+// Define a component to designate a rotation speed to an entity.
+#[derive(Component)]
+struct Rotatable {
+    speed: f32,
+}
+
 // fn startup(mut commands: Commands) {
 //     commands.spawn((
 //         Camera2d::default(),
@@ -33,13 +42,24 @@ pub struct CrossequaPlugin;
 //     ));
 // }
 
+// This system will rotate any entity in the scene with a Rotatable component around its y-axis.
+fn rotate_cube(mut cubes: Query<(&mut Transform, &Rotatable)>, timer: Res<Time>) {
+    for (mut transform, cube) in &mut cubes {
+        // The speed is first multiplied by TAU which is a full rotation (360deg) in radians,
+        // and then multiplied by delta_secs which is the time that passed last frame.
+        // In other words. Speed is equal to the amount of rotations per second.
+        transform.rotate_y(cube.speed * TAU * timer.delta_secs());
+        transform.rotate_z(cube.speed * TAU * timer.delta_secs());
+    }
+}
+
 fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    let cube = bevy::math::primitives::Cuboid::new(1.0, 1.0, 1.0);
+    let cube = bevy::math::primitives::Cuboid::new(0.5, 0.5, 0.5);
     let cube_mesh = meshes.add(cube);
 
     // TODO: ...
@@ -50,15 +70,15 @@ fn startup(
     let material = texture_manager.get_tile_material();
 
     // add entities to the world
-    for y in -2..=2 {
-        for x in -5..=5 {
-            let x01 = (x + 5) as f32 / 10.0;
-            let y01 = (y + 2) as f32 / 4.0;
+    for y in 0..=1 {
+        for x in 0..=1 {
+            bevy::log::info!("cube {} {}", x, y);
             // sphere
             commands.spawn((
                 Mesh3d(cube_mesh.clone()),
                 MeshMaterial3d(materials.add(material.clone())),
-                Transform::from_xyz(x as f32, y as f32 + 0.5, 0.0),
+                Transform::from_xyz((x + 1) as f32, (y + 1)as f32, 0.0),
+                Rotatable { speed: 0.3 },
             ));
         }
     }
@@ -74,7 +94,7 @@ fn startup(
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_xyz(0.0, 0.0, 8.0).looking_at(Vec3::default(), Vec3::Y),
+        Transform::from_xyz(0.0, 0.0, 800.0).looking_at(Vec3::default(), Vec3::new(0.1,0.8, 0.1)),
         Projection::from(OrthographicProjection {
             scale: 0.01,
 
@@ -94,8 +114,8 @@ impl Plugin for CrossequaPlugin {
         app.add_plugins(DefaultPlugins)
             .add_systems(
                 Startup,
-                (equation::generate_equations, board::setup_board).chain(),
+                (equation::generate_equations, startup, board::setup_board).chain(),
             )
-            .add_systems(Update, player_input::handle_mouse_click);
+            .add_systems(Update, (rotate_cube, player_input::handle_mouse_click));
     }
 }
