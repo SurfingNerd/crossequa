@@ -20,7 +20,7 @@ pub fn main_lighting() {
             sensor_height: 0.01866,
         }))
         .add_systems(Startup, setup)
-        .add_systems(Update, (update_exposure, movement, animate_light_direction))
+        .add_systems(Update, (update_exposure, animate_light_direction))
         .run();
 }
 
