@@ -3,7 +3,7 @@ use bevy::input;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use crossequa_plugin::CrossequaPlugin;
-use lighting::main_lighting;
+// use lighting::main_lighting;
 
 mod atlas_test;
 mod crossequa_plugin;
