@@ -38,8 +38,7 @@ pub fn setup_board(
     mut meshes: ResMut<Assets<Mesh>>,
     equations: Res<equation::GridEquations>,
 ) {
-    info!("setup board called!");
-    let grid_size = 20;
+    let grid_size = 50;
     let cell_size = CellSize {
         size: 60,
         padding: 14,
@@ -69,7 +68,7 @@ pub fn setup_board(
                 .spawn((
                     Name::new(format!("({}, {}) symbol '{}'", x, y, symbol.to_string())),
                     Coordinates::new(x as i32, y as i32),
-                    Text2d::new(symbol.to_string()),
+                    Text2d::new(symbol.string(x, y)),
                     TextShadow::default(),
                     Transform::from_xyz(x_pos, y_pos, 0.0),
                 ))
