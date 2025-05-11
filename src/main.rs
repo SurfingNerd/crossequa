@@ -20,7 +20,7 @@ fn main() {
             enable_multipass_for_primary_context: true,
         })
         .add_plugins(WorldInspectorPlugin::default().run_if(
-            input::common_conditions::input_toggle_active(true, input::prelude::KeyCode::Tab),
+            input::common_conditions::input_toggle_active(false, input::prelude::KeyCode::Tab),
         ))
         .run();
 }

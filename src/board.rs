@@ -42,8 +42,9 @@ pub fn setup_board(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     equations: Res<equation::GridEquations>,
+    window: Single<&Window>,
 ) {
-    let grid_size = 50;
+    let grid_size = 20;
     let cell_size = CellSize {
         size: 60,
         padding: 14,
@@ -63,11 +64,17 @@ pub fn setup_board(
         }
     }
 
+    let half_win_size = window.size() / 2.0;
+
     for x in 0..grid_size {
         for y in 0..grid_size {
             let symbol = &grid[x as usize][y as usize];
             let x_pos = (cell_size.size + cell_size.padding) as f32 * x as f32;
             let y_pos = (cell_size.size + cell_size.padding) as f32 * y as f32;
+
+            // Center the cell in the window
+            let x_pos = x_pos - half_win_size.x;
+            let y_pos = y_pos - half_win_size.y;
 
             let mut curr_entity_comm = commands.spawn((
                 Name::new(format!("({}, {}) symbol '{}'", x, y, symbol.to_string())),

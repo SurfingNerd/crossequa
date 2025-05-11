@@ -22,7 +22,8 @@ pub fn handle_mouse_click(
     let half_win_size = window.size() / 2.0;
 
     if mouse_button_input.just_pressed(MouseButton::Left) {
-        let mut cursor_position_centered = window.cursor_position().unwrap() - half_win_size;
+        let mut cursor_position_centered = window.cursor_position().unwrap();
+        cursor_position_centered.y -= half_win_size.y * 2.0;
         cursor_position_centered.y *= -1.0; // Invert y-axis for the Bevy coordinate system
 
         // TODO: Put this in a a constant/resource

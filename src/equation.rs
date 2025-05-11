@@ -358,7 +358,7 @@ pub fn generate_equations(mut commands: Commands) {
     let mut running_result = None;
     let mut grid_equations = Vec::new();
 
-    for _ in 0..20 {
+    for _ in 0..6 {
         let equation = EquationGenerator::generate_equation(running_result, 2);
         let grid_equation = GridEquation::new(equation.clone(), position, dir.clone());
 
