@@ -13,5 +13,6 @@
        xorg.libX11
        xorg.libXrandr
        xorg.libXcursor
-       xorg.libXi ];
+       xorg.libXi
+       imagemagick ];
 }
