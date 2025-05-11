@@ -68,7 +68,7 @@ pub fn setup_board(
                 .spawn((
                     Name::new(format!("({}, {}) symbol '{}'", x, y, symbol.to_string())),
                     Coordinates::new(x as i32, y as i32),
-                    Text2d::new(symbol.string(x, y)),
+                    Text2d::new(symbol.to_string()),
                     TextShadow::default(),
                     Transform::from_xyz(x_pos, y_pos, 0.0),
                 ))

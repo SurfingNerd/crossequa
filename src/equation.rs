@@ -47,21 +47,10 @@ impl std::fmt::Display for Symbol {
             Symbol::Operator(Operator::Multiply) => "*".to_string(),
             Symbol::Operator(Operator::Divide) => "/".to_string(),
             Symbol::Equals => "=".to_string(),
+            Symbol::Unknown(_) => "x".to_string(),
             Symbol::Empty => " ".to_string(),
-            _ => "x".to_string(),
         };
         write!(f, "{s}")
-    }
-}
-
-impl Symbol {
-    pub fn string(&self, x: usize, y: usize) -> String {
-        if let Symbol::Unknown(n) = self {
-            println!("matched unknown at ({}, {}) {}", x, y, n);
-            return String::from("x");
-        }
-        let out = format!("{}", self);
-        out
     }
 }
 
@@ -110,7 +99,7 @@ impl EquationGenerator {
         let mut running_result = running_result;
 
         for i in 0..num_operations {
-            let op = Self::generate_operation(running_result);
+            let op = Self::generate_operation(i, running_result);
             if i == 0 || running_result.is_none() {
                 curr_equation.push(Symbol::Number(op.num1));
             }
@@ -123,16 +112,18 @@ impl EquationGenerator {
         Equation::new(curr_equation, vec![Symbol::Number(running_result.unwrap())])
     }
 
-    fn generate_operation(prev_a: Option<i32>) -> BinaryOperation {
+    fn generate_operation(i: u32, prev_a: Option<i32>) -> BinaryOperation {
         let mut rng = rand::rng();
 
         let a = prev_a.unwrap_or_else(|| rng.random_range(1..10));
         let b = rng.random_range(1..10);
-        let mut operators = vec![Operator::Add, Operator::Subtract, Operator::Multiply];
-        if b != 0 {
-            operators.push(Operator::Divide);
+        let mut operators = vec![Operator::Add, Operator::Subtract];
+        if i == 0 {
+            operators.push(Operator::Multiply);
+            if b != 0 {
+                operators.push(Operator::Divide);
+            }
         }
-
         let op = operators.choose(&mut rng).unwrap();
 
         let (num1, num2, result) = match op {
@@ -187,6 +178,10 @@ impl GridEquation {
 
     pub fn len(&self) -> usize {
         self.eq.len()
+    }
+
+    pub fn get_symbol_idx(&self, idx: usize) -> &Symbol {
+        self.eq.lhs.get(idx).unwrap()
     }
 
     pub fn get_symbol(&self, position: (usize, usize)) -> Option<&Symbol> {
@@ -257,6 +252,10 @@ impl GridEquation {
         }
     }
 
+    pub fn set_symbol_idx(&mut self, idx: usize, symbol: Symbol) {
+        self.eq.lhs[idx] = symbol;
+    }
+
     pub fn pos_of_rand_number(&self) -> (usize, usize) {
         let max_n = (self.eq.lhs.len() / 2 + 1) as u32;
         let n = (rand::random::<u32>() % max_n) + 1;
@@ -264,13 +263,20 @@ impl GridEquation {
         self.pos_of_nth_number(n as usize).unwrap()
     }
 
+    pub fn pos_of_rand_number_with_n(&self) -> (usize, usize, usize) {
+        let max_n = (self.eq.lhs.len() / 2 + 1) as u32;
+        let n = (rand::random::<u32>() % max_n) + 1;
+
+        self.pos_of_nth_number_with_idx(n as usize).unwrap()
+    }
+
     pub fn pos_of_nth_number(&self, n: usize) -> Option<(usize, usize)> {
         let (start_x, start_y) = self.start_pos;
 
-        let mut counter_n = 0;
+        let mut counter_idx = 0;
         let mut counter = 0;
         for sym in self.eq.lhs.clone() {
-            counter_n += 1;
+            counter_idx += 1;
             if let Symbol::Number(_) = sym {
                 counter += 1;
                 if counter == n {
@@ -279,16 +285,47 @@ impl GridEquation {
             }
         }
 
-        if counter_n > self.eq.lhs.len() {
+        counter_idx -= 1;
+
+        if counter_idx >= self.eq.lhs.len() {
             return None; // Out of bounds
         }
 
         let (x, y) = match self.direction {
-            Direction::Horizontal => (start_x + counter_n - 1, start_y),
-            Direction::Vertical => (start_x, start_y + counter_n - 1),
+            Direction::Horizontal => (start_x + counter_idx, start_y),
+            Direction::Vertical => (start_x, start_y + counter_idx),
         };
 
         Some((x, y))
+    }
+
+    pub fn pos_of_nth_number_with_idx(&self, n: usize) -> Option<(usize, usize, usize)> {
+        let (start_x, start_y) = self.start_pos;
+
+        let mut counter_idx = 0;
+        let mut counter = 0;
+        for sym in self.eq.lhs.clone() {
+            counter_idx += 1;
+            if let Symbol::Number(_) = sym {
+                counter += 1;
+                if counter == n {
+                    break;
+                }
+            }
+        }
+
+        counter_idx -= 1;
+
+        if counter_idx >= self.eq.lhs.len() {
+            return None; // Out of bounds
+        }
+
+        let (x, y) = match self.direction {
+            Direction::Horizontal => (start_x + counter_idx, start_y),
+            Direction::Vertical => (start_x, start_y + counter_idx),
+        };
+
+        Some((x, y, counter_idx))
     }
 
     pub fn contains_point(&self, point: (usize, usize)) -> bool {
@@ -391,18 +428,19 @@ pub fn set_unknowns_in_equations(grid_equations: &mut Vec<GridEquation>) {
 
     for grid_eq in grid_equations.iter_mut() {
         // Find a position of a number to convert to `Unknown`
-        let (x, y) = grid_eq.pos_of_rand_number();
+        let (x, y, idx) = grid_eq.pos_of_rand_number_with_n();
         // Check if this position is already updated in another equation
         if updated_positions.contains(&(x, y)) {
             continue;
         }
 
-        let n = match grid_eq.get_symbol((x, y)) {
-            Some(Symbol::Number(n)) => n,
-            _ => continue,
-        };
-        grid_eq.set_symbol((x, y), Symbol::Unknown(*n));
-        println!("Set unknown to: ({}, {}), {}", x, y, grid_eq);
-        updated_positions.push((x, y));
+        let curr_symbol = grid_eq.get_symbol_idx(idx as usize);
+        if let Symbol::Number(n) = curr_symbol {
+            grid_eq.set_symbol_idx(idx as usize, Symbol::Unknown(*n));
+            println!("Set unknown to: ({}, {}), {}", x, y, grid_eq);
+            updated_positions.push((x, y));
+        } else {
+            println!("Did not find number: {}", curr_symbol);
+        }
     }
 }
