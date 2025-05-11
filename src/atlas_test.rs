@@ -39,7 +39,10 @@ fn setup(
         Some(UVec2 { x: 0, y: 410 }),
     );
 
+    //texture_atlas.textures
+
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
+
 
     // offset left: 1024
     // offsset top: 412
